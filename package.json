@@ -1,0 +1,9 @@
+{
+  "type": "module",
+  "license": "Unlicense",
+  "dependencies": {
+    "@dsnp/parquetjs": "1.7.0",
+    "@frost-beta/mlx": "0.0.12",
+    "llama3-tokenizer-js": "1.1.3"
+  }
+}
