@@ -2,8 +2,8 @@
 
 import fs from 'node:fs'
 import path from 'node:path'
-import tokenizer from 'llama3-tokenizer-js'
-import parquet from "@dsnp/parquetjs"
+import parquet from '@dsnp/parquetjs'
+import {fromPreTrained} from '@lenml/tokenizer-llama3'
 import {core as mx, optimizers as optim, nn, utils} from '@frost-beta/mlx'
 
 import Model from './model.js'
@@ -28,6 +28,9 @@ async function main() {
   const config = JSON.parse(fs.readFileSync('config.json'))
   const model = new Model(config)
 
+  // Get the tokenizer of Llama3.
+  const tokenizer = fromPreTrained()
+
   // const weightsFile = 'weights.safetensors'
   // if (fs.existsSync(weightsFile)) {
   //   model.loadWeights(weightsFile)
@@ -50,19 +53,18 @@ async function main() {
   const files = process.argv.slice(2)
   const reportPerIter = 10
   let losses = []
-  for (let e = 0, iterations = 1, start = Date.now(); e < epochs; ++e) {
-    for await (const [x, y] of iterateBatches(files, batchSize, contextSize)) {
+  for (let e = 0, iterations = 0, start = Date.now(); e < epochs; ++e) {
+    for await (const [x, y] of iterateBatches(files, tokenizer, batchSize, contextSize)) {
       // Use mx.tidy to free all the intermediate tensors immediately.
       mx.tidy(() => {
         // Compute loss and gradients, then update the model.
-        const [loss, grads] = lossAndGradFunction(model, x, y)
+        const [loss, grads] = lossAndGradFunction(model, mx.array(x, mx.int32), mx.array(y, mx.int32))
         optimizer.update(model, grads)
         mx.eval(model.state, optimizer.state)
         losses.push(loss.item())
         // Keep the states of model and optimizer from getting freed.
         return [model.state, optimizer.state]
       })
-      mx.dispose([x, y])
       // Report updates.
       if (++iterations % reportPerIter === 0) {
         const stop = Date.now()
@@ -81,7 +83,8 @@ async function main() {
 }
 
 // Read datasets from |files|, and generate batches of [inputs, targets].
-async function* iterateBatches(files, batchSize, contextSize) {
+async function* iterateBatches(files, tokenizer, batchSize, contextSize) {
+  const eosToken = tokenizer.encode(tokenizer.getToken('eos_token'))[0]
   let inputBatch = []
   let outputBatch = []
   for (const f of files) {
@@ -94,15 +97,17 @@ async function* iterateBatches(files, batchSize, contextSize) {
       const tokens = tokenizer.encode(record.text)
       // Generate batches from the tokens.
       for (let i = 0; i < tokens.length - 1; i += contextSize) {
-        const length = Math.min(contextSize, tokens.length - i - 1);
-        inputBatch.push(tokens.slice(i, i + length))
-        outputBatch.push(tokens.slice(i + 1, i + 1 + length))
+        const length = Math.min(contextSize, tokens.length - i - 1)
+        // If the batch's length is less than contextSize, fill it with EOS.
+        let paddings = []
+        if (length < contextSize)
+          paddings = new Array(contextSize - length).fill(eosToken)
+        inputBatch.push(tokens.slice(i, i + length).concat(paddings))
+        outputBatch.push(tokens.slice(i + 1, i + 1 + length).concat(paddings))
       }
       // Yield batches with each batch of |batchSize|.
       while (inputBatch.length >= batchSize) {
-        const x = inputBatch.splice(0, batchSize)
-        const y = outputBatch.splice(0, batchSize)
-        yield [ mx.array(x, mx.int32), mx.array(y, mx.int32) ]
+        yield [ inputBatch.splice(0, batchSize), outputBatch.splice(0, batchSize) ]
       }
     }
     await reader.close()

@@ -4,6 +4,6 @@
   "dependencies": {
     "@dsnp/parquetjs": "1.7.0",
     "@frost-beta/mlx": "0.0.12",
-    "llama3-tokenizer-js": "1.1.3"
+    "@lenml/tokenizer-llama3": "1.0.10"
   }
 }
