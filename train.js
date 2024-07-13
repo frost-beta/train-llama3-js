@@ -94,7 +94,8 @@ async function main() {
   }
 
   // Save weights on exit.
-  console.log('Saving weights...')
+  const weightsFile = 'weights.safetensors'
+  console.log(`Save weights to ${weightsFile}.`)
   model.saveWeights(weightsFile)
 }
 
