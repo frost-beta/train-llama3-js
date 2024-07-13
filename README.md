@@ -22,7 +22,7 @@ Download a dataset:
 
 ```sh
 npm install -g @frost-beta/huggingface
-huggingface download --to dataset-tinystories --filter=*.parquet datasets/roneneldan/TinyStories
+huggingface download --to dataset-tinystories --filter=*.parquet datasets/Chat-Error/tinystories-gpt4
 ```
 
 Train with it:

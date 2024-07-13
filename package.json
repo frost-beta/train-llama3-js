@@ -3,7 +3,9 @@
   "license": "Unlicense",
   "dependencies": {
     "@dsnp/parquetjs": "1.7.0",
-    "@frost-beta/mlx": "0.0.12",
-    "@lenml/tokenizer-llama3": "1.0.10"
-  }
+    "@frost-beta/mlx": "0.0.14",
+    "@lenml/tokenizer-llama3": "1.0.10",
+    "pretty-ms": "^9.0.0"
+  },
+  "packageManager": "yarn@1.22.22"
 }
