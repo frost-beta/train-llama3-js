@@ -21,6 +21,8 @@ const contextSize = 128
 const epochs = 1
 const batchSize = 128 + 64
 const learningRate = 1e-4
+// Max rows of date to train, set to Infinity to train everything.
+const maxRows = 300 * 1000
 
 main()
 
@@ -42,7 +44,7 @@ async function main() {
 
   // Command line flags.
   const files = process.argv.slice(2)
-  const totalRows = await getRowCount(files)
+  const totalRows = Math.min(maxRows, await getRowCount(files))
   const reportPerIter = Math.max(Math.floor(32 / batchSize * 10), 1)
   console.log('Total rows of data to train:', totalRows)
 
@@ -69,7 +71,7 @@ async function main() {
       if (++iterations % reportPerIter === 0) {
         const stop = Date.now()
         const trainLoss = mean(losses)
-        const eta = (totalRows / (row - lastRow)) * (stop - start)
+        const eta = ((totalRows - row) / (row - lastRow)) * (stop - start)
         console.log(`Iter ${iterations}`,
                     `(${(100 * row / totalRows).toFixed(1)}%):`,
                     `Train loss ${trainLoss.toFixed(2)},`,
@@ -85,6 +87,9 @@ async function main() {
                     `Cache ${(mx.metal.getCacheMemory() / 1024 ** 2).toFixed(1)}M,`,
                     `JS Objects ${mx.getWrappersCount()}.`)
       }
+      // Traning data limit.
+      if (row > maxRows)
+        break
     }
   }
 
