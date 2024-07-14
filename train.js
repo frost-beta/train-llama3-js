@@ -19,7 +19,7 @@ const contextSize = 128
 
 // Traning configs.
 const epochs = 1
-const batchSize = 128 + 64
+const batchSize = 32
 const learningRate = 1e-4
 // Max rows of date to train, set to Infinity to train everything.
 const maxRows = 300 * 1000
