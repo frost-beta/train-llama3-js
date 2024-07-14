@@ -9,7 +9,7 @@ repo with a few new things added:
 1. Model is trained on a large parquet dataset for a long time, instead of a
    single text file for a few minutes.
 2. The tokenizer of Llama3 is used.
-3. Generate the Llama3 weights which can be loaded by any inference engine.
+3. Generate Llama3 weights which can be loaded by any inference engine.
 4. There is an estimation of how long the training will take.
 
 ## Platform
@@ -26,8 +26,9 @@ cd train-llama3-js
 npm install
 ```
 
-To train we first need a dataset, I suggest using the synthetic TinyStories
-dataset for beginners:
+Then download the dataset for training. You can use any parquet dataset on
+[HuggingFace](https://huggingface.co/datasets?modality=modality:text&format=format:parquet&sort=trending),
+for beginners, I suggest using the synthetic TinyStories dataset:
 
 ```sh
 npm install -g @frost-beta/huggingface
@@ -37,9 +38,31 @@ huggingface download datasets/Chat-Error/tinystories-gpt4
 The model's configurations are coded in the `config.json` file, which you can
 change to make it a smaller or a bigger model.
 
+```json
+{
+  "model_type": "llama",
+  "hidden_size": 128,
+  "num_hidden_layers": 8,
+  "intermediate_size": 32,
+  "num_attention_heads": 4,
+  "rms_norm_eps": 1e-06,
+  "vocab_size": 128256,
+  "num_key_value_heads": 4
+}
+```
+
 The traning script `train.js` includes some hyperparameters which you might want
-to tune, currently it is set so a M3 Max 32GB machine can train with first 300k
+to tune, currently it is set so a M3 Max 32GB machine trains with first 300k
 entries of the TinyStories dataset for about 1 hour.
+
+```js
+// Traning configs.
+const epochs = 1
+const batchSize = 32
+const learningRate = 1e-4
+// Max rows of date to train, set to Infinity to train everything.
+const maxRows = 300 * 1000
+```
 
 For machines with smaller RAM, you should change `batchSize` to a smaller size
 like 16, which will take more time to train but requires much less RAM. And by
