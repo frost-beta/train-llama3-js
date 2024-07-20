@@ -96,6 +96,13 @@ npm install -g llama3
 llama3-generate . 'Once upon a time'
 ```
 
+## What's next
+
+* [train-japanese-llama3-js](https://github.com/frost-beta/train-japanese-llama3-js) -
+  Train a Japanese language model.
+* [fine-tune-decoder-js](https://github.com/frost-beta/fine-tune-decoder-js) -
+  Fine-tune a decoder-only model.
+
 ## License
 
 Public domain.
